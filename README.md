@@ -12,7 +12,6 @@ on the Android variants of the tablet, but this has not been tested.
 Most of the hardware is functional, with the following exceptions:
 - Cameras
 - LTE modem (in L modifications of the tablet)
-- Keyboard vibration feedback
 
 Most Linux patches have been mainlined, except for the sound drivers.
 
@@ -63,7 +62,20 @@ something goes wrong.
 ## Troubleshooting
 
 Known issues:
-- Camera and vibration force-feedback don't work.
+- Cameras don't work out of the box on the YB1-X91F: `atomisp` needs a
+  DMI-scoped `CsiLanes` override for `OVTI2740:00`. The pending fix for this
+  (`[PATCH v5 07/16] media: atomisp: Add Yoga Book camera configuration`) only
+  matches `Lenovo YB1-X91L`, so the Windows (X91F) variant needs its own entry;
+  without it `ov2740` fails to probe with `-EINVAL` and atomisp registers **no**
+  video node at all - the healthy rear OV8858 is affected too. A small patch
+  adding a single DMI entry is attached here:
+  https://gist.github.com/KanzakiK/e8b101edde4052c588537caca0e39f7e
+  - Neither sensor has 3A (no automatic exposure / white balance). Frames come
+    out dark (Y around 20) and green-tinted; the YU12 output needs software
+    white balance plus a level stretch to look right.
+  - The front sensor returns garbage on the **first** streaming session after
+    each boot; a second start/stop cycle gives a proper image.
+  - All of the above was verified on a YB1-X91F; the X91L was not tested.
 - alsa-lib (libasound2 package in Debian/Ubuntu) should has version >= 1.2.9
 - To have automatic screen rotation working, it should be supported by desktop
   environment. Try Gnome first.
